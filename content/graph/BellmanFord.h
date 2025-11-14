@@ -11,26 +11,34 @@
  */
 #pragma once
 
-const ll inf = LLONG_MAX;
-struct Ed { int a, b, w, s() { return a < b ? a : -a; }};
-struct Node { ll dist = inf; int prev = -1; };
+const ll mx = 1123;
+vector<tuple<ll, ll, ll>> edges;
+ll dist[mx], par[mx];
 
-void bellmanFord(vector<Node>& nodes, vector<Ed>& eds, int s) {
-	nodes[s].dist = 0;
-	sort(all(eds), [](Ed a, Ed b) { return a.s() < b.s(); });
+bool bellmanFord(int src, ll n) {
+    for (ll i = 0; i <= n; i++) { // <= n can handle both 0-based and 1-based
+        dist[i] = inf;
+        par[i] = -1;
+    }
+    dist[src] = 0;
 
-	int lim = sz(nodes) / 2 + 2; // /3+100 with shuffled vertices
-	rep(i,0,lim) for (Ed ed : eds) {
-		Node cur = nodes[ed.a], &dest = nodes[ed.b];
-		if (abs(cur.dist) == inf) continue;
-		ll d = cur.dist + ed.w;
-		if (d < dest.dist) {
-			dest.prev = ed.a;
-			dest.dist = (i < lim-1 ? d : -inf);
-		}
-	}
-	rep(i,0,lim) for (Ed e : eds) {
-		if (nodes[e.a].dist == -inf)
-			nodes[e.b].dist = -inf;
-	}
+    for (int i = 1; i <= n - 1; i++) {
+        bool relaxed = false;
+        for (auto [u, v, w] : edges) {
+            if (dist[u] < inf && dist[u] + w < dist[v]) {
+                dist[v] = max(-inf, dist[u] + w); // prevent underflow
+                par[v] = u;
+                relaxed = true;
+            }
+        }
+        if (!relaxed) break;
+    }
+
+    // Negative cycle check
+    for (auto [u, v, w] : edges) {
+        if (dist[u] < inf && dist[u] + w < dist[v]) {
+            return true; // cycle exists
+        }
+    }
+    return false;
 }
